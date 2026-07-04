@@ -67,7 +67,7 @@ interface BetPlacedArgs {
 
 /**
  * Full two-phase confidential casino flow, shared by every game:
- *   approve -> play (locks bet + draws sealed seed) -> BetPlaced (gameId + seed)
+ *   approve -> play (locks bet + draws seed) -> BetPlaced (gameId + seed)
  *   -> attestedReveal (covalidator) -> settle (verifies attestation, pays out)
  *   -> the game's *_Outcome_Event.
  *
@@ -102,7 +102,7 @@ export async function runGame<TOutcome>(
     await waitForTransactionReceipt(wagmiConfig, { hash: approveHash });
   }
 
-  // 2. play(): locks the wager + draws + reveals the sealed seed.
+  // 2. play(): locks the wager + draws + reveals the seed.
   onStage?.("betting");
   const predictedId = (await readContract(wagmiConfig, {
     address: gameAddress,

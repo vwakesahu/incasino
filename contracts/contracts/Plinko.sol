@@ -5,7 +5,7 @@ import {CasinoBase} from "./CasinoBase.sol";
 import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
 
 /// @title Plinko
-/// @notice Drop through 8 sealed pegs; edges pay up to 16x.
+/// @notice Drop through 8 random pegs; edges pay up to 16x.
 contract Plinko is CasinoBase {
     struct Params {
         uint256 wager;

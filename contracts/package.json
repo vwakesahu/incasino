@@ -2,7 +2,7 @@
   "name": "incasino-contracts",
   "version": "1.0.0",
   "private": true,
-  "description": "Confidential casino games on the Inco Lightning SDK. Provably-fair RNG via TEE-sealed e.rand + attestation settlement.",
+  "description": "Confidential casino games on the Inco Lightning SDK. Fair RNG via e.rand + attestation settlement.",
   "license": "GPL-3.0",
   "scripts": {
     "compile": "hardhat compile",

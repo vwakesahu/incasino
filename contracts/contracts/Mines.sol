@@ -5,7 +5,7 @@ import {CasinoBase} from "./CasinoBase.sol";
 import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
 
 /// @title Mines
-/// @notice Pick tiles on a 5x5 grid; avoid the sealed mines to win.
+/// @notice Pick tiles on a 5x5 grid; avoid the hidden mines to win.
 contract Mines is CasinoBase {
     struct Params {
         uint8[2][] points;
@@ -54,7 +54,7 @@ contract Mines is CasinoBase {
         (uint256 seed, PendingGame storage game) = _consumeSettlement(gameId, attestation, signatures);
         Params memory p = abi.decode(game.params, (Params));
 
-        // Derive mine positions from the sealed seed.
+        // Derive mine positions from the seed.
         uint32 random = uint32(seed);
         uint8[2][] memory minePositions = new uint8[2][](p.numMines);
         for (uint8 i = 0; i < p.numMines; i++) {

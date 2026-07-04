@@ -5,7 +5,7 @@ import {CasinoBase} from "./CasinoBase.sol";
 import {DecryptionAttestation} from "@inco/lightning/src/lightning-parts/DecryptionAttester.types.sol";
 
 /// @title RockPaperScissors
-/// @notice Play vs a sealed house move; win 1.75x, tie refunds.
+/// @notice Play vs a hidden house move; win 1.75x, tie refunds.
 contract RockPaperScissors is CasinoBase {
     struct Params {
         uint8 action;

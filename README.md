@@ -1,23 +1,21 @@
 # Incasino
 
-A confidential, provably fair on-chain casino built on Inco Lightning. Six classic games (Coin Flip, Dice, Mines, Plinko, Rock Paper Scissors, Slots) where the randomness is drawn and sealed inside a TEE, so nobody (not the player, not the house, not a validator) can see or bias the outcome before a bet is locked.
+A confidential, fair on-chain casino built on Inco Lightning. Six games (Coin Flip, Dice, Mines, Plinko, Rock Paper Scissors, Slots) where the random outcome stays hidden until your bet is locked, so nobody can see or bias it in advance.
 
-It runs on Base Sepolia with a free test token, so you can try everything without spending real money.
-
-> A quick note on wording: Inco is TEE based (Trusted Execution Environment), not FHE. The API uses "encrypted" terminology, but under the hood it is encrypt/decrypt inside a TEE, not fully homomorphic encryption. So "provably fair" here means a covalidator attestation, not a zero knowledge proof.
+Runs on Base Sepolia with a free test token.
 
 ## How a round works
 
-Because there is no synchronous on-chain decryption, every game is a two step flow:
+Inco has no synchronous on-chain decryption, so every game is two steps:
 
-1. `play(...)` locks your wager, reserves the worst case payout from the house bankroll, draws a single sealed random seed with `e.rand()`, and reveals it. The wager is taken before the reveal, so the outcome is unknowable at the moment you commit.
-2. `settle(gameId, attestation, signatures)` submits the covalidator's decryption attestation. The contract checks the signature and that the attested handle matches the stored seed, then derives the result and pays out.
+1. `play(...)` locks your wager, reserves the worst case payout, draws one random seed with `e.rand()`, and reveals it. The wager is taken first, so the outcome is unknowable when you commit.
+2. `settle(gameId, attestation, signatures)` submits the covalidator attestation. The contract checks it matches the stored seed, derives the result, and pays out.
 
-Everything is computed from that one sealed seed with zero block based entropy, which is what makes it fair.
+Every outcome comes from that one seed with zero block based entropy.
 
 ## Deployed contracts (Base Sepolia)
 
-All contracts are verified on Basescan. The bet token is a plain public ERC20 on purpose: the privacy here lives in the sealed RNG, not in balances.
+All verified on Basescan. The bet token is a plain public ERC20 on purpose.
 
 | Contract | Address | Explorer |
 |----------|---------|----------|
@@ -29,41 +27,27 @@ All contracts are verified on Basescan. The bet token is a plain public ERC20 on
 | RockPaperScissors | `0xf16b1e3a22143f4fcb6966cda6cb211614b038e0` | [view](https://sepolia.basescan.org/address/0xf16b1e3a22143f4fcb6966cda6cb211614b038e0#code) |
 | SlotMachine | `0x6b1a4eb2a1734f917c688990dba3cdb6718e7124` | [view](https://sepolia.basescan.org/address/0x6b1a4eb2a1734f917c688990dba3cdb6718e7124#code) |
 
-Network: Base Sepolia, chain id 84532. Explorer: https://sepolia.basescan.org
+Network: Base Sepolia, chain id 84532.
 
-## Repository layout
+## Layout
 
 ```
 contracts/   Solidity contracts on Inco Lightning, TypeScript tests, deploy script
 client/      Next.js frontend (App Router, TypeScript, wagmi + RainbowKit + viem)
 ```
 
-`contracts/CasinoBase.sol` holds the shared logic (sealed RNG draw, reveal, attestation settlement, ERC20 bankroll with liability reservation). Each game is a small contract with its own payout math on top of it.
-
-## Running the contracts
+## Run the contracts
 
 ```bash
 cd contracts
 npm install
+cp .env.example .env          # set PRIVATE_KEY_BASE_SEPOLIA and ETHERSCAN_API_KEY
 npm run compile
-npm test                     # runs the play -> reveal -> settle suite on Base Sepolia
-npm run deploy:baseSepolia   # deploy + fund, writes deployments/baseSepolia.json
+npm run deploy:baseSepolia    # deploy + fund, writes deployments/baseSepolia.json
+npm test                      # play -> reveal -> settle suite on Base Sepolia
 ```
 
-Testing and deploying against Base Sepolia needs a funded key. Copy `.env.example` to `.env` and set:
-
-```
-PRIVATE_KEY_BASE_SEPOLIA=0xyourkey
-ETHERSCAN_API_KEY=yourkey     # for contract verification
-```
-
-To verify a contract yourself:
-
-```bash
-npx hardhat verify --network baseSepolia <address> <constructorArgs>
-```
-
-## Running the frontend
+## Run the frontend
 
 ```bash
 cd client
@@ -71,14 +55,14 @@ npm install
 npm run dev
 ```
 
-Optional environment (in `client/.env.local`):
+Optional `client/.env.local`:
 
 ```
-NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_id   # for WalletConnect; injected wallets work without it
-NEXT_PUBLIC_BASE_SEPOLIA_RPC=https://your-rpc      # a keyed RPC, used first with public ones as fallback
+NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_id   # injected wallets work without it
+NEXT_PUBLIC_BASE_SEPOLIA_RPC=https://your-rpc      # used first, public RPCs as fallback
 ```
 
-Connect a wallet (MetaMask, Rabby, WalletConnect, and more), make sure it is on Base Sepolia, grab some test tokens from the Deposit page, and play. Winnings are paid to your wallet automatically once a round settles.
+Connect a wallet on Base Sepolia, grab test tokens from the Deposit page, and play. Winnings are paid to your wallet once a round settles.
 
 ## Tech stack
 

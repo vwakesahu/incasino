@@ -115,7 +115,7 @@ abstract contract CasinoBase is Ownable {
         }
         totalActiveLiability += maxPayout;
 
-        // Sealed draw, revealed for later attestation.
+        // Encrypted draw, revealed for later attestation.
         euint256 seed = e.rand();
         e.allowThis(seed);
         e.reveal(seed);

@@ -1,4 +1,4 @@
-# Inco local node: anvil (EVM) + covalidator (TEE simulator that decrypts/signs).
+# Inco local node: anvil (EVM) + covalidator that decrypts/signs.
 # Required for Hardhat TS tests and local deploys (the covalidator produces the
 # decryption attestations our settle() calls verify on-chain).
 #

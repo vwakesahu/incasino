@@ -142,12 +142,13 @@ export default function Home() {
               collapsible
             >
               <AccordionItem className="mb-2" value="item-1">
-                <AccordionTrigger>Is the casino provably fair?</AccordionTrigger>
+                <AccordionTrigger>Is the casino fair?</AccordionTrigger>
                 <AccordionContent className="text-sm sm:text-base">
-                  Yes. Each round&apos;s outcome is a random value drawn and
-                  sealed inside Inco&apos;s TEE, and only revealed at settlement,  where the contract verifies a covalidator attestation
-                  on-chain. Neither you, the house, nor a validator can see or
-                  bias the result before your bet is locked.
+                  Yes. Each round&apos;s outcome is a random value drawn with
+                  Inco and only revealed at settlement, where the contract
+                  verifies a covalidator attestation on-chain. Neither you, the
+                  house, nor a validator can see or bias the result before your
+                  bet is locked.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem className="mb-2" value="item-2">
@@ -164,7 +165,7 @@ export default function Home() {
                 <AccordionTrigger>How does a round work?</AccordionTrigger>
                 <AccordionContent className="text-sm sm:text-base">
                   Two steps. First you place your bet, which locks your wager
-                  and draws the sealed random seed on-chain. Then the outcome is
+                  and draws the random seed on-chain. Then the outcome is
                   revealed and settled, any winnings are paid to your wallet
                   automatically.
                 </AccordionContent>
