@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# env / secrets (keep .env.example)
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+**/.env.*.local
+
+# next.js
+.next/
+**/.next/
+out/
+**/out/
+
+# solidity / hardhat build output
+**/artifacts/
+**/cache/
+**/typechain-types/
+coverage/
+coverage.json
+
+# tooling / skills
+.agents/
+**/.agents/
+dist/
+**/dist/
+
+# misc
+*.log
+.DS_Store
+**/.DS_Store
