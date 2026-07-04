@@ -1,5 +1,5 @@
 // Inco Lightning casino — Base Sepolia (chainId 84532).
-// Addresses from contracts-inco/deployments/baseSepolia.json.
+// Addresses from contracts/deployments/baseSepolia.json.
 import type { Abi, Address } from "viem";
 
 import ConflipABI from "@/abi/coinFlip.json";

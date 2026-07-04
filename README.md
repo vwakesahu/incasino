@@ -34,16 +34,16 @@ Network: Base Sepolia, chain id 84532. Explorer: https://sepolia.basescan.org
 ## Repository layout
 
 ```
-contracts-inco/   Solidity contracts on Inco Lightning, TypeScript tests, deploy script
-client/           Next.js frontend (App Router, TypeScript, wagmi + RainbowKit + viem)
+contracts/   Solidity contracts on Inco Lightning, TypeScript tests, deploy script
+client/      Next.js frontend (App Router, TypeScript, wagmi + RainbowKit + viem)
 ```
 
-`contracts-inco/CasinoBase.sol` holds the shared logic (sealed RNG draw, reveal, attestation settlement, ERC20 bankroll with liability reservation). Each game is a small contract with its own payout math on top of it.
+`contracts/CasinoBase.sol` holds the shared logic (sealed RNG draw, reveal, attestation settlement, ERC20 bankroll with liability reservation). Each game is a small contract with its own payout math on top of it.
 
 ## Running the contracts
 
 ```bash
-cd contracts-inco
+cd contracts
 npm install
 npm run compile
 npm test                     # runs the play -> reveal -> settle suite on Base Sepolia

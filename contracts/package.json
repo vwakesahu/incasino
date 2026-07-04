@@ -1,19 +1,19 @@
 {
-  "name": "inco-fhe-casino-contracts",
+  "name": "incasino-contracts",
   "version": "1.0.0",
   "private": true,
-  "description": "Confidential casino games migrated from Zama fhEVM to the Inco Lightning SDK (@inco/lightning). Provably-fair RNG via TEE-sealed e.rand + attestation settlement.",
+  "description": "Confidential casino games on the Inco Lightning SDK. Provably-fair RNG via TEE-sealed e.rand + attestation settlement.",
   "license": "GPL-3.0",
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test --network anvil",
+    "test": "hardhat test --network baseSepolia",
+    "test:baseSepolia": "hardhat test --network baseSepolia",
     "test:local": "hardhat test --network anvil",
-    "test:devnet": "hardhat test --network devnet",
+    "deploy:baseSepolia": "hardhat run scripts/deploy.ts --network baseSepolia",
+    "deploy:local": "hardhat run scripts/deploy.ts --network anvil",
     "node:up": "docker compose up -d",
     "node:down": "docker compose down",
     "node:logs": "docker compose logs -f",
-    "deploy:local": "hardhat run scripts/deploy.ts --network anvil",
-    "deploy:devnet": "hardhat run scripts/deploy.ts --network devnet",
     "clean": "hardhat clean"
   },
   "devDependencies": {
