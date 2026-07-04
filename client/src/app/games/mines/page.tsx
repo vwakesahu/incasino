@@ -204,6 +204,30 @@ const Page = () => {
               Reset
             </Button>
           </div>
+          <div className="rounded-base border-4 border-black bg-yellow-300 p-3 text-left">
+            <p className="font-heading text-sm">Want the advanced version?</p>
+            <p className="mt-1 text-xs font-normal text-black/70">
+              Advanced Mines with more features, built on Inco.
+            </p>
+            <div className="mt-2 flex gap-4 text-sm font-bold">
+              <a
+                href="https://inmines.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                Visit ↗
+              </a>
+              <a
+                href="https://github.com/Inco-fhevm/mines"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                Code ↗
+              </a>
+            </div>
+          </div>
           {/* {!isSettingMines ? (
             <Button onClick={handleOpenCells}>Open Selected Cells</Button>
           ) : (
