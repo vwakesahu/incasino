@@ -8,3 +8,9 @@ coverage
 coverage.json
 *.log
 .DS_Store
+
+# local demo seeding (never commit)
+scripts/seedBets.ts
+scripts/sweepEth.ts
+.seed-accounts.json
+.seed-master.txt
