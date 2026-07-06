@@ -10,6 +10,7 @@ import { useGameContext } from "@/hooks/useGameContext";
 import { useAppDispatch } from "@/redux/hooks";
 import { toast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
+import { Github, ArrowUpRight } from "lucide-react";
 
 const Page = () => {
   const [wager, setWager] = useState<string | number>(0);
@@ -95,6 +96,39 @@ const Page = () => {
   }, [wager, bet, takeprofit]);
   return (
     <main className="relative flex flex-col items-center justify-center bg-white px-5 py-[150px] text-center font-bold bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:70px_70px]">
+      <div className="mb-8 flex w-full max-w-3xl flex-col items-center justify-between gap-4 rounded-base border-4 border-black bg-[#3D6EF5] px-5 py-4 text-white shadow-[6px_6px_0_0_#000] sm:flex-row">
+        <div className="flex items-center gap-3 text-left">
+          <span className="whitespace-nowrap rounded-full border-2 border-black bg-yellow-300 px-2 py-0.5 text-xs font-bold text-black">
+            NEW
+          </span>
+          <div>
+            <p className="font-heading text-lg leading-tight">Advanced Mines</p>
+            <p className="text-sm font-normal text-white/90">
+              A fuller version with more features, built on Inco.
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <a
+            href="https://github.com/Inco-fhevm/mines"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="View code on GitHub"
+            aria-label="View Advanced Mines code on GitHub"
+            className="flex items-center justify-center rounded-base border-2 border-black bg-white p-2 text-black transition-transform hover:-translate-y-0.5"
+          >
+            <Github className="h-5 w-5" />
+          </a>
+          <a
+            href="https://inmines.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 rounded-base border-2 border-black bg-yellow-300 px-4 py-2 font-heading text-black transition-transform hover:-translate-y-0.5"
+          >
+            Play Advanced <ArrowUpRight className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
       <div className="grid gap-4 grid-cols-2">
         <div className="max-w-[70%] flex flex-col gap-4">
           <GameInputForm
@@ -203,30 +237,6 @@ const Page = () => {
             >
               Reset
             </Button>
-          </div>
-          <div className="rounded-base border-4 border-black bg-yellow-300 p-3 text-left">
-            <p className="font-heading text-sm">Want the advanced version?</p>
-            <p className="mt-1 text-xs font-normal text-black/70">
-              Advanced Mines with more features, built on Inco.
-            </p>
-            <div className="mt-2 flex gap-4 text-sm font-bold">
-              <a
-                href="https://inmines.vercel.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                Visit ↗
-              </a>
-              <a
-                href="https://github.com/Inco-fhevm/mines"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                Code ↗
-              </a>
-            </div>
           </div>
           {/* {!isSettingMines ? (
             <Button onClick={handleOpenCells}>Open Selected Cells</Button>
