@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { MAX_ROUNDS, MAX_WAGER_PER_ROUND_ETH } from "@/utils/contract";
 
 const MAX_WAGER = Number(MAX_WAGER_PER_ROUND_ETH);
+const QUICK = ["0.0001", "0.0002", "0.0003", MAX_WAGER_PER_ROUND_ETH];
 
 /** Wager (ETH, capped) + optional rounds stepper. Shared across all games. */
 export function WagerRounds({
@@ -51,6 +52,21 @@ export function WagerRounds({
           onChange={(e) => setWager(e.target.value)}
           className={over ? "border-red-500" : ""}
         />
+        <div className="flex flex-wrap gap-2">
+          {QUICK.map((amt) => (
+            <button
+              key={amt}
+              type="button"
+              disabled={disabled}
+              onClick={() => setWager(amt)}
+              className={`rounded-base border-2 border-black px-2.5 py-1 text-xs font-heading transition-transform hover:-translate-y-0.5 disabled:opacity-50 ${
+                wager === amt ? "bg-[#3D6EF5] text-white" : "bg-white"
+              }`}
+            >
+              {amt}
+            </button>
+          ))}
+        </div>
         {over && (
           <span className="text-xs font-base text-red-600">
             Max is {MAX_WAGER_PER_ROUND_ETH} ETH per round.

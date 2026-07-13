@@ -11,19 +11,31 @@ const fmt = (wei: bigint) => {
   return `${wei < 0n ? "-" : ""}${body}`;
 };
 
-/** Inline strip of per-round win/loss chips + net total. Replaces the old dialog. */
-export function RoundResults({ result }: { result: PlayResult | null }) {
-  if (!result) return null;
+/**
+ * Inline strip of per-round win/loss chips + net total.
+ * `count` (default all) limits how many rounds are shown, so the strip can
+ * build up live during a sequential reveal.
+ */
+export function RoundResults({ result, count }: { result: PlayResult | null; count?: number }) {
+  if (!result || result.rounds.length === 0) return null;
 
-  const wins = result.rounds.filter((r) => r.won).length;
   const total = result.rounds.length;
-  const up = result.net >= 0n;
+  const shownN = count === undefined ? total : Math.max(0, Math.min(count, total));
+  const shown = result.rounds.slice(0, shownN);
+  if (shown.length === 0) return null;
+
+  const wins = shown.filter((r) => r.won).length;
+  const perRound = result.wager / BigInt(total);
+  const paid = shown.reduce((a, r) => a + r.payout, 0n);
+  const net = paid - perRound * BigInt(shown.length);
+  const up = net >= 0n;
+  const partial = shownN < total;
 
   return (
     <div className="flex flex-col gap-3 rounded-base border-4 border-black bg-white p-4 text-left shadow-[4px_4px_0_0_#000]">
       <div className="flex items-center justify-between">
         <span className="font-heading text-sm">
-          Won {wins}/{total}
+          Won {wins}/{partial ? `${shownN}` : total}
         </span>
         <span
           className={`flex items-center gap-1 rounded-base border-2 border-black px-2 py-1 font-heading text-sm ${
@@ -32,12 +44,12 @@ export function RoundResults({ result }: { result: PlayResult | null }) {
         >
           {up ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
           {up ? "+" : ""}
-          {fmt(result.net)} ETH
+          {fmt(net)} ETH
         </span>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {result.rounds.map((r, i) => (
+        {shown.map((r, i) => (
           <span
             key={i}
             title={`Round ${i + 1}: ${r.won ? `+${fmt(r.payout)} ETH` : "loss"}`}

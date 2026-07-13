@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { parseEther } from "viem";
 import { Github, ArrowUpRight, Minus, Plus } from "lucide-react";
 import { WagerRounds } from "@/components/WagerRounds";
@@ -9,6 +9,7 @@ import { GameStatus } from "@/components/GameStatus";
 import { RoundResults } from "@/components/RoundResults";
 import { Label } from "@/components/ui/label";
 import { useCasinoGame } from "@/hooks/useCasinoGame";
+import { useWinFx } from "@/hooks/useWinFx";
 import { MAX_WAGER_PER_ROUND_ETH } from "@/utils/contract";
 
 const MAX = Number(MAX_WAGER_PER_ROUND_ETH);
@@ -31,6 +32,11 @@ export default function MinesPage() {
   const [wager, setWager] = useState(MAX_WAGER_PER_ROUND_ETH);
   const [rounds, setRounds] = useState(1); // unused (single board) — WagerRounds needs it
   const { stage, error, result, isPlaying, play, retry, reset } = useCasinoGame<MinesRaw>();
+  const celebrate = useWinFx();
+
+  useEffect(() => {
+    if (result && result.net > 0n) celebrate();
+  }, [result, celebrate]);
 
   const revealed = result !== null;
 
