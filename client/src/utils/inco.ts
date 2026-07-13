@@ -1,7 +1,7 @@
 import { Lightning } from "@inco/lightning-js/lite";
 import { pad, parseEventLogs, toHex } from "viem";
 import type { Address, Hex } from "viem";
-import { readContract, writeContract, waitForTransactionReceipt } from "@wagmi/core";
+import { readContract, writeContract, waitForTransactionReceipt, simulateContract } from "@wagmi/core";
 import { wagmiConfig } from "@/wagmi/config";
 import { casinoABI, casinoAddress } from "./contract";
 import type { GameContext, GameStage, PlayArgs, PlayResult, RoundResult } from "@/types";
@@ -73,7 +73,7 @@ interface OutcomeArgs {
  *   -> the game's *_Outcome_Event. Returns a normalised {@link PlayResult}.
  */
 export async function runGame<TRaw = unknown>(
-  _ctx: GameContext,
+  ctx: GameContext,
   { functionName, playArgs, wager, outcomeEvent, onStage }: RunGameArgs
 ): Promise<PlayResult<TRaw>> {
   const fee = (await readContract(wagmiConfig, {
@@ -83,14 +83,19 @@ export async function runGame<TRaw = unknown>(
   })) as bigint;
 
   // 1. play(): locks the wager (as ETH value) + draws + reveals the sealed seed.
+  // Simulate first so a revert (e.g. InsufficientBankroll, WagerTooHigh) surfaces
+  // a clear reason before we spend gas on a failing transaction.
   onStage?.("betting");
-  const playHash = await writeContract(wagmiConfig, {
+  const play = {
     address: casinoAddress,
     abi: casinoABI,
     functionName,
     args: playArgs,
     value: wager + fee,
-  });
+    account: ctx.address,
+  } as const;
+  await simulateContract(wagmiConfig, play);
+  const playHash = await writeContract(wagmiConfig, play);
   const playReceipt = await waitForTransactionReceipt(wagmiConfig, { hash: playHash });
 
   const placed = parseEventLogs({ abi: casinoABI, eventName: "BetPlaced", logs: playReceipt.logs });
