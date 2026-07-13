@@ -120,9 +120,14 @@ export async function runGame<TRaw = unknown>(
   const args = out[0].args as unknown as OutcomeArgs;
 
   const payout = args.payout ?? 0n;
+  // A round is a "win" only if it paid MORE than its own stake (net profit).
+  // Some games (slots pair, plinko center) pay a fraction of the wager back —
+  // that is still a net loss, not a win.
+  const roundCount = args.payouts ? args.payouts.length : 1;
+  const perRound = roundCount > 0 ? wager / BigInt(roundCount) : wager;
   const rounds: RoundResult[] = args.payouts
-    ? args.payouts.map((p) => ({ won: p > 0n, payout: p }))
-    : [{ won: payout > 0n, payout }];
+    ? args.payouts.map((p) => ({ won: p > perRound, payout: p }))
+    : [{ won: payout > perRound, payout }];
 
   onStage?.("done");
   return {

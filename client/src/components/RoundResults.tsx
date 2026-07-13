@@ -28,7 +28,8 @@ export function RoundResults({ result, count }: { result: PlayResult | null; cou
   const perRound = result.wager / BigInt(total);
   const paid = shown.reduce((a, r) => a + r.payout, 0n);
   const net = paid - perRound * BigInt(shown.length);
-  const up = net >= 0n;
+  const pos = net > 0n;
+  const neg = net < 0n;
   const partial = shownN < total;
 
   return (
@@ -39,11 +40,11 @@ export function RoundResults({ result, count }: { result: PlayResult | null; cou
         </span>
         <span
           className={`flex items-center gap-1 rounded-base border-2 border-black px-2 py-1 font-heading text-sm ${
-            up ? "bg-green-400" : "bg-red-400"
+            pos ? "bg-green-400" : neg ? "bg-red-400" : "bg-gray-200"
           }`}
         >
-          {up ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-          {up ? "+" : ""}
+          {pos ? <TrendingUp className="h-4 w-4" /> : neg ? <TrendingDown className="h-4 w-4" /> : null}
+          {pos ? "+" : ""}
           {fmt(net)} ETH
         </span>
       </div>
