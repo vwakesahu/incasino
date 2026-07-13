@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { parseEther } from "viem";
+import { motion } from "framer-motion";
 import { SkipForward } from "lucide-react";
 import { WagerRounds } from "@/components/WagerRounds";
 import { PlayButton } from "@/components/PlayButton";
@@ -24,11 +25,14 @@ interface RPSRaw {
 
 const MOVES = ["✊", "✋", "✌️"] as const;
 const LABELS = ["Rock", "Paper", "Scissors"] as const;
+const HANDS = ["/rock-hand/rock.svg", "/rock-hand/paper.svg", "/rock-hand/scissors.svg"] as const;
+const bob = { animate: { y: [0, -16, 0] }, transition: { duration: 1.4, repeat: Infinity } };
 
 export default function RockPaperScissorsPage() {
   const [action, setAction] = useState(0);
   const [wager, setWager] = useState(MAX_WAGER_PER_ROUND_ETH);
   const [rounds, setRounds] = useState(1);
+  const [houseCycle, setHouseCycle] = useState(0);
   const { stage, error, result, isPlaying, play, retry } = useCasinoGame<RPSRaw>();
   const celebrate = useWinFx();
   const reveal = useSequentialReveal(result, {
@@ -43,11 +47,18 @@ export default function RockPaperScissorsPage() {
 
   const valid = Number(wager) > 0 && Number(wager) <= MAX && !busy;
 
+  // Cycle the house hand while a round is spinning.
+  useEffect(() => {
+    if (typeof window === "undefined" || !spinningNow) return;
+    const id = window.setInterval(() => setHouseCycle((c) => (c + 1) % 3), 150);
+    return () => window.clearInterval(id);
+  }, [spinningNow]);
+
   const landedIdx = result && reveal.active >= 0 && !reveal.spinning ? reveal.active : -1;
-  const houseMove = landedIdx >= 0 ? Number(result!.raw.houseActions[landedIdx]) : null;
   const wonThis = landedIdx >= 0 ? result!.rounds[landedIdx].won : null;
-  const ring = wonThis === true ? "ring-8 ring-green-400" : wonThis === false ? "ring-8 ring-red-400" : "";
-  const showHouse = spinningNow || landedIdx >= 0;
+  const houseImg = landedIdx >= 0 ? Number(result!.raw.houseActions[landedIdx]) : houseCycle;
+  const houseTint =
+    wonThis === true ? "bg-green-200" : wonThis === false ? "bg-red-200" : "bg-transparent";
 
   const onPlay = () => {
     const perRound = parseEther(wager);
@@ -69,23 +80,35 @@ export default function RockPaperScissorsPage() {
       <div className="grid w-full max-w-4xl items-center gap-8 md:grid-cols-2">
         {/* Visual */}
         <div className="flex flex-col items-center justify-center gap-4">
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex h-40 w-40 items-center justify-center rounded-full border-4 border-black bg-[#3D6EF5] text-6xl font-heading text-white shadow-[6px_6px_0_0_#000]">
-              {MOVES[action]}
+          <div className="flex w-full items-center justify-between gap-2">
+            {/* Your hand */}
+            <div className="flex w-1/3 justify-center rounded-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <motion.img
+                src={HANDS[action]}
+                alt={LABELS[action]}
+                className="w-28 m800:w-20"
+                style={{ rotate: "45deg" }}
+                animate={bob.animate}
+                transition={bob.transition}
+              />
             </div>
 
-            {showHouse && (
-              <>
-                <span className="font-heading text-2xl">vs</span>
-                <div
-                  className={`flex h-40 w-40 items-center justify-center rounded-full border-4 border-black text-6xl font-heading shadow-[6px_6px_0_0_#000] ${
-                    spinningNow ? "animate-pulse bg-yellow-300" : `bg-white ${ring}`
-                  }`}
-                >
-                  {spinningNow ? "✊" : MOVES[houseMove!]}
-                </div>
-              </>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/vs.svg" alt="vs" className="w-16 m800:w-12" />
+
+            {/* House hand */}
+            <div className={`flex w-1/3 justify-center rounded-2xl p-2 transition-colors ${houseTint}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <motion.img
+                src={HANDS[houseImg]}
+                alt="house"
+                className={`w-28 m800:w-20 ${landedIdx < 0 && !spinningNow ? "opacity-40" : ""}`}
+                style={{ rotate: "-45deg", scaleX: -1 }}
+                animate={bob.animate}
+                transition={bob.transition}
+              />
+            </div>
           </div>
 
           {revealing && (
