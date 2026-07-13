@@ -1,42 +1,50 @@
 "use client";
+
+import { Loader2 } from "lucide-react";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Button } from "./ui/button";
-import Link from "next/link";
 
-const PlayButton = ({
-  handler,
-  tokens,
+/** Big Play button that doubles as a connect-gate and shows a spinner while running. */
+export function PlayButton({
+  onPlay,
+  isPlaying,
+  disabled = false,
+  label = "Play",
 }: {
-  handler: () => void;
-  tokens?: string;
-}) => {
+  onPlay: () => void;
+  isPlaying: boolean;
+  disabled?: boolean;
+  label?: string;
+}) {
   const { isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
 
+  if (!isConnected) {
+    return (
+      <button
+        onClick={openConnectModal}
+        className="w-full rounded-base border-4 border-black bg-yellow-300 px-4 py-3 font-heading text-lg text-black shadow-[4px_4px_0_0_#000] transition-transform hover:-translate-y-0.5"
+      >
+        Connect Wallet
+      </button>
+    );
+  }
+
   return (
-    <div className="w-full">
-      {isConnected ? (
-        <div className="w-full">
-          {tokens && tokens === "0" ? (
-            <Link href={"/deposit"}>
-              <Button onClick={handler} className="bg-main w-full">
-                Buy Token
-              </Button>
-            </Link>
-          ) : (
-            <Button onClick={handler} className="bg-main w-full">
-              Play
-            </Button>
-          )}
-        </div>
+    <button
+      onClick={onPlay}
+      disabled={disabled || isPlaying}
+      className="flex w-full items-center justify-center gap-2 rounded-base border-4 border-black bg-[#3D6EF5] px-4 py-3 font-heading text-lg text-white shadow-[4px_4px_0_0_#000] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+    >
+      {isPlaying ? (
+        <>
+          <Loader2 className="h-5 w-5 animate-spin" /> Playing…
+        </>
       ) : (
-        <Button onClick={openConnectModal} className="bg-main w-full">
-          Connect Wallet
-        </Button>
+        label
       )}
-    </div>
+    </button>
   );
-};
+}
 
 export default PlayButton;

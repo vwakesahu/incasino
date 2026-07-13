@@ -1,23 +1,24 @@
 # Incasino — Contracts (Inco Lightning)
 
-Confidential casino games on the Inco Lightning SDK. Six games (CoinFlip, Dice, Mines, Plinko, RockPaperScissors, SlotMachine) plus a mock USDC bet token, with a TypeScript deploy script and Hardhat tests that run on Base Sepolia.
+A single `Casino.sol` contract on the Inco Lightning SDK. It holds one native ETH
+bankroll and implements all six games (CoinFlip, Dice, Mines, Plinko,
+RockPaperScissors, SlotMachine), with a TypeScript deploy script and Hardhat tests
+that run on Base Sepolia.
 
 ## How a round works
 
 Inco has no synchronous on-chain decryption, so each game is two steps:
 
-1. `play(...)` locks the wager and draws a random seed with `e.rand()`.
+1. A `play...` function locks the wager (sent as ETH) and draws a random seed with `e.rand()`.
 2. `settle(gameId, attestation, signatures)` submits the covalidator attestation. The contract checks it matches the stored seed, derives the outcome, and pays out.
 
-## Layout
+## Design
 
-```
-CasinoBase.sol          shared base: RNG draw, reveal, settlement, bankroll
-MockUSDC.sol            plain ERC20 bet token
-CoinFlip / Dice / Mines / Plinko / RockPaperScissors / SlotMachine
-scripts/deploy.ts       deploy and fund the games, save addresses
-test/casino.test.ts     play -> settle tests for every game
-```
+- Native ETH: `play` is payable with `msg.value = wager + fee`. The wager stays as bankroll; the Inco fee is spent by `e.rand()`.
+- One bankroll: the contract's ETH balance backs every game. `availableBankroll()` is the balance minus reserved liability. The owner funds it (`depositBankroll()` / `receive()`) and withdraws non-reserved ETH (`withdraw`, `withdrawAll`).
+- Caps: `MAX_WAGER_PER_ROUND = 0.0005 ether`, `MAX_ROUNDS = 10`.
+- Multi-round: CoinFlip, Dice, Plinko, RPS and Slots derive N rounds from one seed. Mines is a single board.
+- Safety: worst-case payout is reserved before each bet, payout is released before the ETH send (checks-effects-interactions), one `nonReentrant` guard, and `expireGame` refunds a stuck wager after 15 minutes.
 
 ## Run on Base Sepolia
 
@@ -25,8 +26,22 @@ test/casino.test.ts     play -> settle tests for every game
 npm install
 cp .env.example .env          # set PRIVATE_KEY_BASE_SEPOLIA
 npm run compile
-npm run deploy:baseSepolia    # writes deployments/baseSepolia.json
-npm test
+npm run deploy:baseSepolia    # deploy + fund the bankroll, writes deployments/baseSepolia.json
+npm test                      # play -> reveal -> settle for every game
 ```
 
-The bet token (MockUSDC) is a plain public ERC20; the privacy is in the RNG, not balances.
+Override the initial bankroll with `BANKROLL_ETH` (default 0.05).
+
+## Verify on Basescan
+
+```bash
+npx hardhat verify --network baseSepolia <address>
+```
+
+## Local node (alternative)
+
+```bash
+npm run node:up      # docker compose up -d (anvil + covalidator)
+npm run test:local
+npm run node:down
+```

@@ -9,32 +9,17 @@ import {
 } from "react";
 import { usePublicClient } from "wagmi";
 import { formatUnits, getAddress, parseAbiItem, type Address } from "viem";
-import {
-  coinFlipAddress,
-  diceAddress,
-  minesAddress,
-  plinkoAddress,
-  handRockAddress,
-  slotMachineAddress,
-} from "@/utils/contract";
+import { casinoAddress } from "@/utils/contract";
 import { BALANCE_REFRESH_EVENT } from "@/utils/inco";
 
-const GAMES: ReadonlyArray<{ name: string; address: Address }> = [
-  { name: "Coin Flip", address: coinFlipAddress },
-  { name: "Dice", address: diceAddress },
-  { name: "Mines", address: minesAddress },
-  { name: "Plinko", address: plinkoAddress },
-  { name: "Hand Rock", address: handRockAddress },
-  { name: "Slots", address: slotMachineAddress },
-];
+// Casino.Kind enum order.
+const GAME_BY_KIND = ["Coin Flip", "Dice", "Mines", "Plinko", "Rock Paper Scissors", "Slots"];
 
 const BET_SETTLED = parseAbiItem(
-  "event BetSettled(uint256 indexed gameId, address indexed player, uint256 wager, uint256 payout, uint256 randomSeed)"
+  "event BetSettled(uint256 indexed gameId, address indexed player, uint256 wager, uint256 payout, uint256 randomSeed, uint8 kind)"
 );
 
-// Look back a small window so a single getLogs is accepted by EVERY free RPC
-// (sepolia.base.org caps ranges at 2000 blocks; others allow more). ~2000 Base
-// blocks ≈ 1h of "recent" bets; anything you play shows up immediately.
+// Small window so a single getLogs is accepted by every free RPC (~1h of bets).
 const LOOKBACK_BLOCKS = 2000n;
 const MAX_ROWS = 8;
 
@@ -72,7 +57,7 @@ const RecentBetsContext = createContext<RecentBetsValue>(EMPTY);
 export const useRecentBets = (): RecentBetsValue => useContext(RecentBetsContext);
 
 const fmt = (wei: bigint): string =>
-  Number(formatUnits(wei, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  Number(formatUnits(wei, 18)).toLocaleString(undefined, { maximumFractionDigits: 5 });
 
 const shortAddr = (a: Address): string => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
@@ -96,32 +81,24 @@ export function RecentBetsProvider({ children }: { children: ReactNode }) {
         const latest = await publicClient.getBlockNumber();
         const fromBlock = latest > LOOKBACK_BLOCKS ? latest - LOOKBACK_BLOCKS : 0n;
 
-        // ONE multi-address getLogs across all 6 games (not one call per game),
-        // so a page load is just getBlockNumber + this. Map each log to its game
-        // by the emitting contract address.
-        const nameByAddress = new Map(
-          GAMES.map((g) => [g.address.toLowerCase(), g.name])
-        );
         const logs = await publicClient.getLogs({
-          address: GAMES.map((g) => g.address),
+          address: casinoAddress,
           event: BET_SETTLED,
           fromBlock,
           toBlock: latest,
         });
 
-        const all = logs
-          .map((log) => ({ log, game: nameByAddress.get(log.address.toLowerCase()) ?? "Game" }))
-          .sort((a, b) => Number(b.log.blockNumber - a.log.blockNumber));
+        const all = [...logs].sort((a, b) => Number(b.blockNumber - a.blockNumber));
 
         const players = new Set<string>();
         let wagered = 0n;
-        for (const { log } of all) {
+        for (const log of all) {
           const player = log.args.player;
           if (player) players.add(player.toLowerCase());
           wagered += log.args.wager ?? 0n;
         }
 
-        const bets: RecentBet[] = all.slice(0, MAX_ROWS).map(({ log, game }) => {
+        const bets: RecentBet[] = all.slice(0, MAX_ROWS).map((log) => {
           const wager = log.args.wager ?? 0n;
           const payout = log.args.payout ?? 0n;
           const profit = payout - wager;
@@ -129,10 +106,11 @@ export function RecentBetsProvider({ children }: { children: ReactNode }) {
           const multiplier = wager > 0n ? Number(payout) / Number(wager) : 0;
           const secondsAgo = Number(latest - log.blockNumber) * 2;
           const player = log.args.player;
+          const kind = Number(log.args.kind ?? 0);
           return {
             key: `${log.transactionHash}-${log.logIndex}`,
             time: ago(secondsAgo),
-            game,
+            game: GAME_BY_KIND[kind] ?? "Game",
             player: player ? shortAddr(getAddress(player)) : "—",
             wager: fmt(wager),
             multiplier: `${multiplier.toFixed(2)}x`,
@@ -160,8 +138,6 @@ export function RecentBetsProvider({ children }: { children: ReactNode }) {
 
     load();
 
-    // Re-fetch after each settled game (event fired from runGame). The short
-    // delay lets the RPC index the freshly-emitted BetSettled log.
     const onSettled = () => {
       window.setTimeout(() => {
         if (!cancelled) load();

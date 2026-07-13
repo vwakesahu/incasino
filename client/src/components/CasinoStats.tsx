@@ -23,7 +23,7 @@ export default function CasinoStats() {
 
         <p className="font-base text-6xl m1300:text-5xl m800:text-4xl m500:text-3xl">
           {show(stats.totalWagered)}{" "}
-          <span className="text-3xl m800:text-xl">USDC</span>
+          <span className="text-3xl m800:text-xl">ETH</span>
         </p>
       </section>
       <section className="border-b-4 border-black bg-main md:bg-white p-14 py-16 m1300:p-10 m1300:py-12 m800:p-6 m800:py-8">

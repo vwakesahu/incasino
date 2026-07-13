@@ -1,280 +1,104 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
+import { parseEther } from "viem";
+import { WagerRounds } from "@/components/WagerRounds";
+import { PlayButton } from "@/components/PlayButton";
+import { GameStatus } from "@/components/GameStatus";
+import { RoundResults } from "@/components/RoundResults";
+import { useCasinoGame } from "@/hooks/useCasinoGame";
+import { MAX_WAGER_PER_ROUND_ETH } from "@/utils/contract";
 
-import { toast } from "@/components/ui/use-toast";
-import { confetti } from "@/utils/confetii";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import HandRock from "@/modules/hand-rock";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import GameInputForm from "@/components/GameInputForm";
-import PlayButton from "@/components/PlayButton";
-import { playHandRock } from "@/utils/helpers/handrockHelpers";
-import { setToken } from "@/redux/slices/tokenSlice";
-import RockPaperScissorsAlert from "@/modules/hand-rock/handrockAlert";
-import { useGameContext } from "@/hooks/useGameContext";
-import { useAppDispatch } from "@/redux/hooks";
+const MAX = Number(MAX_WAGER_PER_ROUND_ETH);
 
-const Page = () => {
-  const [open, setOpen] = useState(false);
-  const [wager, setWager] = useState<string | number>(0);
-  const [bet, setBet] = useState<string | number>(1);
-  const [totalwager, setTotalwager] = useState(0);
-  const [maxPayout, setMaxPayout] = useState(0);
-  const [stopOnLoss, setStopOnLoss] = useState<string | number>(0);
-  const [takeprofit, setTakeprofit] = useState<string | number>(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(1);
-  const [selectValue, setSelectValue] = useState("rock");
-  const [userChoice, setUserChoice] = useState(0);
-  const [gameOutcome] = useState<string | null>(null);
-  const [results, setResults] = useState<number[]>();
-  const [result] = useState(1);
-  const dispath = useAppDispatch();
-  const { ctx, ready } = useGameContext();
-  const images = [
-    "/rock-hand/rock.svg",
-    "/rock-hand/paper.svg",
-    "/rock-hand/scissors.svg",
-  ];
-  // const userImages = [
-  //   "/rock-hand/user/rock.svg",
-  //   "/rock-hand/user/paper.svg",
-  //   "/rock-hand/user/scissors.svg",
-  // ];
+// Outcome-event args emitted by playRPS, used for the vs. visual.
+interface RPSRaw {
+  houseActions: readonly bigint[];
+  payouts: readonly bigint[];
+  rounds: number;
+}
 
-  const handleUserChoice = (choice: string) => {
-    setSelectValue(choice);
-    if (choice === "rock") setUserChoice(0);
-    if (choice === "paper") setUserChoice(1);
-    if (choice === "scissors") setUserChoice(2);
+const MOVES = ["✊", "✋", "✌️"] as const;
+const LABELS = ["Rock", "Paper", "Scissors"] as const;
+
+export default function RockPaperScissorsPage() {
+  const [action, setAction] = useState(0);
+  const [wager, setWager] = useState(MAX_WAGER_PER_ROUND_ETH);
+  const [rounds, setRounds] = useState(1);
+  const { stage, error, result, isPlaying, play, retry } = useCasinoGame<RPSRaw>();
+
+  const valid = Number(wager) > 0 && Number(wager) <= MAX;
+
+  const house = result?.raw.houseActions;
+  const houseLast = house && house.length > 0 ? Number(house[house.length - 1]) : null;
+
+  const onPlay = () => {
+    const perRound = parseEther(wager);
+    play({
+      functionName: "playRPS",
+      playArgs: [action, perRound, rounds],
+      wager: perRound * BigInt(rounds),
+      outcomeEvent: "RPS_Outcome_Event",
+    });
   };
-
-  const playGame = () => {
-    if (!wager) {
-      toast({
-        title: "Please add a valid wager",
-      });
-      return;
-    }
-    if (!ctx) {
-      toast({ title: "Please connect your wallet!" });
-      return;
-    }
-    playHandRock(
-      ctx,
-      String(wager),
-      Number(bet),
-      userChoice,
-      String(takeprofit ? takeprofit : maxPayout.toString()),
-      String(stopOnLoss),
-      setToken,
-      ready,
-      dispath,
-      setIsPlaying,
-      stopPlaying,
-    );
-  };
-
-  const stopPlaying = (computerChoice: number[]) => {
-    setIsPlaying(false);
-    // Determine game result
-    // setResult(computerChoice);
-    setOpen(true);
-    setResults(computerChoice);
-    // const gameResult = determineGameResult(userChoice, computerChoice);
-
-    // if (gameResult === "win") {
-    //   confetti();
-    // }
-  };
-
-  useEffect(() => {
-    // Calculate total wager and round to nearest integer
-    setTotalwager(Math.round(Number(wager) * Number(bet)));
-  }, [wager, bet]);
-
-  useEffect(() => {
-    if (takeprofit !== 0 && takeprofit !== undefined) {
-      setMaxPayout(Math.round(Number(takeprofit)));
-    } else if (takeprofit === 0 && takeprofit !== undefined) {
-      const calculatedPayout = Math.round(Number(wager) * Number(bet) * 1.98);
-      setMaxPayout(calculatedPayout);
-    }
-  }, [wager, bet, takeprofit]);
-
-  // useEffect(() => {
-  //   if (isPlaying) {
-  //     const timeout = setTimeout(() => {
-  //       stopPlaying();
-  //     }, 2000);
-
-  //     return () => clearTimeout(timeout);
-  //   }
-  // }, [isPlaying]);
-
-  useEffect(() => {
-    if (gameOutcome === "win") {
-      confetti(); // Show confetti for win
-    }
-  }, [gameOutcome]);
-
-  const changeImage = () => {
-    if (isPlaying) {
-      setTimeout(() => {
-        setCurrentImageIndex((prevIndex) =>
-          prevIndex === images.length - 1 ? 0 : prevIndex + 1
-        );
-      }, 150);
-    }
-  };
-
-  useEffect(() => {
-    changeImage();
-  }, [currentImageIndex, isPlaying]);
 
   return (
-    <div>
-      <RockPaperScissorsAlert
-        open={open}
-        setOpen={setOpen}
-        results={results as readonly number[]}
-        userChoice={userChoice}
-      />
-      <main className="w-full grid items-center justify-center bg-white px-5 py-[150px] text-center font-bold bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:70px_70px]">
-        <div className="grid min-w-[90vw] gap-4 grid-cols-2">
-          <div className="flex flex-col items-center w-full gap-4">
-            <div className="w-full max-w-sm flex flex-col gap-4">
-              <GameInputForm
-                id={"wager"}
-                label={"Wager"}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWager(e.target.value)}
-                placeholder={"Choose Wager"}
-                type={"number"}
-                value={wager}
-              />
-              <GameInputForm
-                id={"bets"}
-                label={"Bets"}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBet(e.target.value)}
-                placeholder={""}
-                type={"number"}
-                value={bet}
-              />
+    <main className="relative flex flex-col items-center justify-center bg-white px-5 py-[130px] bg-[linear-gradient(to_right,#80808022_1px,transparent_1px),linear-gradient(to_bottom,#80808022_1px,transparent_1px)] bg-[size:70px_70px]">
+      <div className="grid w-full max-w-4xl items-center gap-8 md:grid-cols-2">
+        {/* Visual */}
+        <div className="flex items-center justify-center gap-4">
+          <div
+            className={`flex h-40 w-40 items-center justify-center rounded-full border-4 border-black text-6xl font-heading shadow-[6px_6px_0_0_#000] ${
+              isPlaying ? "animate-pulse bg-yellow-300" : "bg-[#3D6EF5] text-white"
+            }`}
+          >
+            {MOVES[action]}
+          </div>
 
-              <div className="grid gap-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <GameInputForm
-                    id={"totalwager"}
-                    label={"Total Wager"}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {}}
-                    placeholder={"-"}
-                    value={totalwager}
-                    className={"cursor-not-allowed"}
-                  />{" "}
-                  <GameInputForm
-                    id={"maxpayout"}
-                    label={"Max Payout"}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {}}
-                    placeholder={"-"}
-                    value={maxPayout}
-                    className={"cursor-not-allowed"}
-                  />
-                </div>
-
-                <div className="grid place-items-start gap-2">
-                  <p>Select your move</p>
-                  <RadioGroup
-                    value={selectValue}
-                    onValueChange={handleUserChoice}
-                    className="flex"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="rock" id="rock" />
-                      <Label htmlFor="rock" className="cursor-pointer">
-                        Rock
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="paper" id="paper" />
-                      <Label htmlFor="paper" className="cursor-pointer">
-                        Paper
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="scissors" id="scissors" />
-                      <Label htmlFor="scissors" className="cursor-pointer">
-                        Scissors
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+          {houseLast !== null && (
+            <>
+              <span className="font-heading text-2xl">vs</span>
+              <div className="flex h-40 w-40 items-center justify-center rounded-full border-4 border-black bg-white text-6xl font-heading shadow-[6px_6px_0_0_#000]">
+                {MOVES[houseLast]}
               </div>
-
-              <Accordion
-                className="w-full lg:w-[unset] bg-white border-none shadow-none"
-                type="single"
-                collapsible
-              >
-                <AccordionItem className="max-w-full" value="item-1">
-                  <AccordionTrigger className="bg-transparent">
-                    Advanced
-                  </AccordionTrigger>
-                  <AccordionContent className="grid grid-cols-2 gap-4">
-                    <GameInputForm
-                      id={"stoponloss"}
-                      label={"Stop on Loss"}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStopOnLoss(e.target.value)}
-                      placeholder={"-"}
-                      type={"number"}
-                      value={stopOnLoss}
-                    />{" "}
-                    <GameInputForm
-                      id={"takeprofit"}
-                      label={"Take Profit"}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTakeprofit(e.target.value)}
-                      placeholder={"-"}
-                      type={"number"}
-                      value={takeprofit}
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              <PlayButton handler={playGame} />
-            </div>
-          </div>
-
-          <div className="md:flex hidden relative items-center">
-            <div className="w-[550px]">
-              <HandRock
-                images={images}
-                currentImageIndex={currentImageIndex}
-                userImage={userChoice}
-                isPlaying={isPlaying}
-                result={result}
-              />
-            </div>
-          </div>
-          {/* <div className="md:flex hidden w-full min-h-full items-center justify-center">
-            <HandRock
-              images={images}
-              currentImageIndex={currentImageIndex}
-              userImage={userChoice}
-              isPlaying={isPlaying}
-              result={result}
-            />
-          </div> */}
+            </>
+          )}
         </div>
-      </main>
-    </div>
-  );
-};
 
-export default Page;
+        {/* Controls */}
+        <div className="flex flex-col gap-5 rounded-base border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_#000]">
+          <h1 className="font-heading text-2xl">Rock Paper Scissors</h1>
+
+          <div className="grid grid-cols-3 gap-3">
+            {LABELS.map((label, i) => (
+              <button
+                key={label}
+                onClick={() => setAction(i)}
+                disabled={isPlaying}
+                className={`flex flex-col items-center gap-1 rounded-base border-4 border-black px-2 py-3 font-heading transition-transform hover:-translate-y-0.5 ${
+                  action === i ? "bg-[#3D6EF5] text-white" : "bg-white"
+                }`}
+              >
+                <span className="text-3xl">{MOVES[i]}</span>
+                <span className="text-sm">{label}</span>
+              </button>
+            ))}
+          </div>
+
+          <WagerRounds
+            wager={wager}
+            setWager={setWager}
+            rounds={rounds}
+            setRounds={setRounds}
+            showRounds
+            disabled={isPlaying}
+          />
+
+          <PlayButton onPlay={onPlay} isPlaying={isPlaying} disabled={!valid} />
+          <GameStatus stage={stage} error={error} onRetry={retry} />
+          <RoundResults result={result} />
+        </div>
+      </div>
+    </main>
+  );
+}

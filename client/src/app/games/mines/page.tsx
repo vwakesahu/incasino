@@ -1,101 +1,96 @@
 "use client";
-import GameInputForm from "@/components/GameInputForm";
-import { Button } from "@/components/ui/button";
-// import { Slider } from "@/components/ui/slider";
-import { setToken } from "@/redux/slices/tokenSlice";
-import { playMineGame } from "@/utils/helpers/minesHelpers";
-import React, { useEffect, useState } from "react";
-import { Slider } from "@/components/ui/slider";
-import { useGameContext } from "@/hooks/useGameContext";
-import { useAppDispatch } from "@/redux/hooks";
-import { toast } from "@/components/ui/use-toast";
+
+import { useState } from "react";
+import { parseEther } from "viem";
+import { Github, ArrowUpRight, Minus, Plus } from "lucide-react";
+import { WagerRounds } from "@/components/WagerRounds";
+import { PlayButton } from "@/components/PlayButton";
+import { GameStatus } from "@/components/GameStatus";
+import { RoundResults } from "@/components/RoundResults";
 import { Label } from "@/components/ui/label";
-import { Github, ArrowUpRight } from "lucide-react";
+import { useCasinoGame } from "@/hooks/useCasinoGame";
+import { MAX_WAGER_PER_ROUND_ETH } from "@/utils/contract";
 
-const Page = () => {
-  const [wager, setWager] = useState<string | number>(0);
-  const [bet] = useState<string | number>(1);
-  const [, setTotalwager] = useState(0);
-  const [, setMaxPayout] = useState(0);
-  const [takeprofit] = useState<string | number>(0);
-  const { ctx, ready } = useGameContext();
-  const dispath = useAppDispatch();
-  const [difficulty, setDifficulty] = useState([1]);
+const MAX = Number(MAX_WAGER_PER_ROUND_ETH);
+const SIZE = 5; // 5x5 board
+const MIN_MINES = 1;
+const MAX_MINES = 5;
+const MAX_PICKS = 10;
 
-  const [selectedMines, setSelectedMines] = useState<number[][]>([]);
-  const [minesState, setMinesState] = useState<readonly (readonly number[])[]>([]);
-  const [gameStarted, setGameStarted] = useState(false);
+/** Outcome-event args for Mines — each point is [row, col]. */
+interface MinesRaw {
+  selectedPoints: readonly (readonly bigint[])[];
+  minePositions: readonly (readonly bigint[])[];
+}
 
-  const handleClick = (row: number, col: number) => {
-    if (minesState.length > 0) return; // Disable selection if the game has started
-    const newSelection = [...selectedMines, [row, col]];
-    setSelectedMines(newSelection);
+const clampMines = (n: number) => Math.max(MIN_MINES, Math.min(MAX_MINES, n));
+
+export default function MinesPage() {
+  const [selected, setSelected] = useState<number[][]>([]);
+  const [numMines, setNumMines] = useState(3);
+  const [wager, setWager] = useState(MAX_WAGER_PER_ROUND_ETH);
+  const [rounds, setRounds] = useState(1); // unused (single board) — WagerRounds needs it
+  const { stage, error, result, isPlaying, play, retry, reset } = useCasinoGame<MinesRaw>();
+
+  const revealed = result !== null;
+
+  const mineSet = new Set(
+    (result?.raw.minePositions ?? []).map(([r, c]) => `${Number(r)},${Number(c)}`)
+  );
+
+  const valid =
+    selected.length >= 1 &&
+    selected.length <= MAX_PICKS &&
+    numMines >= MIN_MINES &&
+    numMines <= MAX_MINES &&
+    Number(wager) > 0 &&
+    Number(wager) <= MAX;
+
+  const toggle = (row: number, col: number) => {
+    if (revealed || isPlaying) return;
+    setSelected((prev) => {
+      const exists = prev.some(([r, c]) => r === row && c === col);
+      if (exists) return prev.filter(([r, c]) => !(r === row && c === col));
+      if (prev.length >= MAX_PICKS) return prev;
+      return [...prev, [row, col]];
+    });
   };
 
-  const startGame = async () => {
-    if (gameStarted) {
-      alert("Please reset the game before starting a new one.");
-      return;
+  const onPlay = () => {
+    const perRound = parseEther(wager);
+    play({
+      functionName: "playMines",
+      playArgs: [selected, numMines, perRound],
+      wager: perRound,
+      outcomeEvent: "Mines_Outcome_Event",
+    });
+  };
+
+  const newGame = () => {
+    setSelected([]);
+    reset();
+  };
+
+  const cell = (row: number, col: number): { cls: string; content: string } => {
+    const isSelected = selected.some(([r, c]) => r === row && c === col);
+    if (!revealed) {
+      return {
+        cls: isSelected
+          ? "bg-yellow-300"
+          : "bg-white hover:-translate-y-0.5 hover:bg-[#3D6EF5]/10",
+        content: "",
+      };
     }
-    // Call smart contract to send selected mines and fetch actual mine positions
-    const response = await fetchMinesFromContract(selectedMines);
-    if (!response) return;
-    setMinesState(response);
-    setGameStarted(true);
-    checkResults(response);
+    const isMine = mineSet.has(`${row},${col}`);
+    if (isMine && isSelected) return { cls: "bg-red-400", content: "💥" };
+    if (isMine) return { cls: "bg-red-400", content: "💣" };
+    if (isSelected) return { cls: "bg-green-400", content: "💎" };
+    return { cls: "bg-white opacity-50", content: "" };
   };
 
-  const resetGame = () => {
-    setSelectedMines([]);
-    setMinesState([]);
-    setGameStarted(false);
-  };
-
-  const fetchMinesFromContract = async (selectedMines: number[][]) => {
-    if (!ctx) {
-      toast({ title: "Please connect your wallet!" });
-      return;
-    }
-    const arr = await playMineGame(
-      ctx,
-      String(wager),
-      setToken,
-      ready,
-      dispath,
-      difficulty[0],
-      selectedMines
-    );
-    return arr;
-  };
-
-  const checkResults = (mines: readonly (readonly number[])[]) => {
-    // Check if the user has won or lost
-    const userMines = new Set(selectedMines.map(([r, c]) => `${r},${c}`));
-    let won = true;
-    for (const [r, c] of mines) {
-      if (userMines.has(`${r},${c}`)) {
-        won = false;
-        break;
-      }
-    }
-    alert(won ? "You Win!" : "You Lose!");
-  };
-
-  useEffect(() => {
-    // Calculate total wager and round to nearest integer
-    setTotalwager(Math.round(Number(wager) * Number(bet)));
-  }, [wager, bet]);
-
-  useEffect(() => {
-    if (takeprofit !== 0 && takeprofit !== undefined) {
-      setMaxPayout(Math.round(Number(takeprofit)));
-    } else if (takeprofit === 0 && takeprofit !== undefined) {
-      const calculatedPayout = Math.round(Number(wager) * Number(bet) * 1.98);
-      setMaxPayout(calculatedPayout);
-    }
-  }, [wager, bet, takeprofit]);
   return (
-    <main className="relative flex flex-col items-center justify-center bg-white px-5 py-[150px] text-center font-bold bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:70px_70px]">
+    <main className="relative flex flex-col items-center justify-center bg-white px-5 py-[130px] bg-[linear-gradient(to_right,#80808022_1px,transparent_1px),linear-gradient(to_bottom,#80808022_1px,transparent_1px)] bg-[size:70px_70px]">
+      {/* Advanced Mines banner (kept verbatim) */}
       <div className="mb-8 flex w-full max-w-3xl flex-col items-center justify-between gap-4 rounded-base border-4 border-black bg-[#3D6EF5] px-5 py-4 text-white shadow-[6px_6px_0_0_#000] sm:flex-row">
         <div className="flex items-center gap-3 text-left">
           <span className="whitespace-nowrap rounded-full border-2 border-black bg-yellow-300 px-2 py-0.5 text-xs font-bold text-black">
@@ -129,264 +124,99 @@ const Page = () => {
           </a>
         </div>
       </div>
-      <div className="grid gap-4 grid-cols-2">
-        <div className="max-w-[70%] flex flex-col gap-4">
-          <GameInputForm
-            id={"wager"}
-            label={"Wager"}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWager(e.target.value)}
-            placeholder={"Choose Wager"}
-            type={"number"}
-            value={wager}
-          />
-          {/* <GameInputForm
-            id={"bets"}
-            label={"Bets"}
-            onChange={(e) => setBet(e.target.value)}
-            placeholder={""}
-            type={"number"}
-            value={bet}
-          />
 
-          <div className="grid grid-cols-2 gap-4">
-            <GameInputForm
-              id={"totalwager"}
-              label={"Total Wager"}
-              onChange={(e) => {}}
-              placeholder={"-"}
-              value={totalwager}
-              className={"cursor-not-allowed"}
-            />{" "}
-            <GameInputForm
-              id={"maxpayout"}
-              label={"Max Payout"}
-              onChange={(e) => {}}
-              placeholder={"-"}
-              value={maxPayout}
-              className={"cursor-not-allowed"}
-            />
-          </div> */}
+      {/* Board | Controls */}
+      <div className="grid w-full max-w-4xl items-start gap-8 md:grid-cols-2">
+        {/* Board */}
+        <div className="flex items-start justify-center">
+          <div className="grid w-full max-w-[380px] grid-cols-5 gap-2">
+            {Array.from({ length: SIZE }).flatMap((_, row) =>
+              Array.from({ length: SIZE }).map((_, col) => {
+                const { cls, content } = cell(row, col);
+                return (
+                  <button
+                    key={`${row}-${col}`}
+                    type="button"
+                    onClick={() => toggle(row, col)}
+                    disabled={isPlaying || revealed}
+                    className={`flex aspect-square items-center justify-center rounded-base border-4 border-black text-2xl shadow-[3px_3px_0_0_#000] transition-transform disabled:cursor-not-allowed ${cls}`}
+                  >
+                    {content}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
 
-          {/* <div>
-            <RadioGroup
-              // defaultValue="comfortable"
-              className="flex"
-              onValueChange={(e) => setUserChoiced(e)}
-            >
-              <div className={`flex items-center space-x-2`}>
-                <RadioGroupItem value="heads" id="r1" />
-                <Label htmlFor="r1">Heads</Label>
+        {/* Controls */}
+        <div className="flex flex-col gap-5 rounded-base border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_#000]">
+          <h1 className="font-heading text-2xl">Mines</h1>
+
+          {/* Mines stepper */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <Label>Mines</Label>
+              <span className="text-xs font-base text-black/60">
+                {MIN_MINES}–{MAX_MINES}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={isPlaying || revealed || numMines <= MIN_MINES}
+                onClick={() => setNumMines(clampMines(numMines - 1))}
+                className="flex h-10 w-10 items-center justify-center rounded-base border-2 border-black bg-white transition-transform hover:-translate-y-0.5 disabled:opacity-40"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <div className="flex h-10 flex-1 items-center justify-center rounded-base border-2 border-black bg-white font-heading text-lg">
+                {numMines}
               </div>
-              <div className={`flex items-center space-x-2`}>
-                <RadioGroupItem value="tails" id="r2" />
-                <Label htmlFor="r2">Tails</Label>
-              </div>
-            </RadioGroup>
-          </div> */}
+              <button
+                type="button"
+                disabled={isPlaying || revealed || numMines >= MAX_MINES}
+                onClick={() => setNumMines(clampMines(numMines + 1))}
+                className="flex h-10 w-10 items-center justify-center rounded-base border-2 border-black bg-white transition-transform hover:-translate-y-0.5 disabled:opacity-40"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
 
-          {/* <Accordion
-            className="w-full lg:w-[unset] bg-white border-none shadow-none"
-            type="single"
-            collapsible
-          >
-            <AccordionItem className="max-w-full" value="item-1">
-              <AccordionTrigger className="bg-transparent">
-                Advanced
-              </AccordionTrigger>
-              <AccordionContent className="grid grid-cols-2 gap-4">
-                <GameInputForm
-                  id={"stoponloss"}
-                  label={"Stop on Loss"}
-                  onChange={(e) => setStopOnLoss(e.target.value)}
-                  placeholder={"-"}
-                  type={"number"}
-                  value={stopOnLoss}
-                />{" "}
-                <GameInputForm
-                  id={"takeprofit"}
-                  label={"Take Profit"}
-                  onChange={(e) => setTakeprofit(e.target.value)}
-                  placeholder={"-"}
-                  type={"number"}
-                  value={takeprofit}
-                />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion> */}
-          <SliderMines setValue={setDifficulty} value={difficulty} />
-          {!gameStarted && (
-            <p className="text-sm font-normal text-gray-500 text-left">
-              {selectedMines.length === 0
-                ? "👉 Select your tiles on the board first then “Start Game” unlocks."
-                : `${selectedMines.length} tile${
-                    selectedMines.length > 1 ? "s" : ""
-                  } selected — ready to start.`}
+          <WagerRounds
+            wager={wager}
+            setWager={setWager}
+            rounds={rounds}
+            setRounds={setRounds}
+            showRounds={false}
+            disabled={isPlaying || revealed}
+          />
+
+          {!revealed && (
+            <p className="text-xs font-base text-black/60">
+              {selected.length === 0
+                ? "Pick 1–10 tiles, then Play"
+                : `${selected.length}/${MAX_PICKS} tile${selected.length > 1 ? "s" : ""} selected`}
             </p>
           )}
-          <div className="mb-4 clear-start w-full flex">
-            <Button
-              onClick={startGame}
-              className="px-4 py-2 bg-blue-600 text-white rounded mr-2 w-full"
-              disabled={selectedMines.length === 0}
+
+          {revealed ? (
+            <button
+              type="button"
+              onClick={newGame}
+              className="w-full rounded-base border-4 border-black bg-yellow-300 px-4 py-3 font-heading text-lg text-black shadow-[4px_4px_0_0_#000] transition-transform hover:-translate-y-0.5"
             >
-              Start Game
-            </Button>
-            <Button
-              onClick={resetGame}
-              className="px-4 py-2 bg-red-600 text-white rounded w-full"
-            >
-              Reset
-            </Button>
-          </div>
-          {/* {!isSettingMines ? (
-            <Button onClick={handleOpenCells}>Open Selected Cells</Button>
+              New game
+            </button>
           ) : (
-            <PlayButton handler={play} tokens={token} />
-          )} */}
-        </div>
-        <div className="md:flex hidden relative">
-          <Mines
-            selectedMines={selectedMines}
-            setSelectedMines={setSelectedMines}
-            minesState={minesState}
-            setMinesState={setMinesState}
-            gameStarted={gameStarted}
-            setGameStarted={setGameStarted}
-            handleClick={handleClick}
-            startGame={startGame}
-            checkResults={checkResults}
-            resetGame={resetGame}
-            fetchMinesFromContract={fetchMinesFromContract}
-          />
+            <PlayButton onPlay={onPlay} isPlaying={isPlaying} disabled={!valid} />
+          )}
+
+          <GameStatus stage={stage} error={error} onRetry={retry} />
+          <RoundResults result={result} />
         </div>
       </div>
     </main>
-  );
-};
-
-export default Page;
-
-const Mines = ({
-  selectedMines,
-  setSelectedMines,
-  minesState,
-  setMinesState,
-  gameStarted,
-  setGameStarted,
-  handleClick,
-  startGame,
-  checkResults,
-  resetGame,
-  fetchMinesFromContract,
-}: {
-  selectedMines: number[][];
-  setSelectedMines: React.Dispatch<React.SetStateAction<number[][]>>;
-  minesState: readonly (readonly number[])[];
-  setMinesState: React.Dispatch<
-    React.SetStateAction<readonly (readonly number[])[]>
-  >;
-  gameStarted: boolean;
-  setGameStarted: React.Dispatch<React.SetStateAction<boolean>>;
-  handleClick: (row: number, col: number) => void;
-  startGame: () => Promise<void>;
-  checkResults: (mines: readonly (readonly number[])[]) => void;
-  resetGame: () => void;
-  fetchMinesFromContract: (
-    selectedMines: number[][]
-  ) => Promise<readonly (readonly number[])[] | false | undefined>;
-}) => {
-  return (
-    <div className="w-[550px] h-[550px] flex flex-col items-center justify-center">
-      <div className="w-[475px] h-[475px]">
-        {/* <div className="w-full h-full grid grid-cols-5 grid-rows-5 gap-4">
-          {board.map((row, rowIndex) =>
-            row.map((cell, colIndex) => (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                className={`w-full h-full cursor-pointer border-4 border-black rounded-base ${
-                  revealed[rowIndex][colIndex]
-                    ? cell
-                      ? "bg-red-500"
-                      : "bg-green-500"
-                    : selected[rowIndex][colIndex]
-                    ? "bg-yellow-500"
-                    : "bg-blue-500"
-                }`}
-                onClick={() => handleCellClick(rowIndex, colIndex)}
-              >
-                {revealed[rowIndex][colIndex] ? (
-                  <img
-                    src={cell ? revealedMineImg : revealedSafeImg}
-                    alt={cell ? "Mine" : "Safe"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={selected[rowIndex][colIndex] ? selectedImg : hiddenImg}
-                    alt={selected[rowIndex][colIndex] ? "Selected" : "Hidden"}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </div>
-            ))
-          )}
-        </div> */}
-        <div className="grid grid-rows-5 grid-cols-5 gap-1">
-          {Array.from({ length: 5 }).map((_, row) =>
-            Array.from({ length: 5 }).map((_, col) => {
-              let color = "bg-blue-500";
-              if (selectedMines.some(([r, c]) => r === row && c === col)) {
-                color = "bg-yellow-500";
-              } else if (
-                minesState.length > 0 &&
-                minesState.some(([r, c]) => r === row && c === col)
-              ) {
-                color = "bg-red-500";
-              } else if (
-                minesState.length > 0 &&
-                !minesState.some(([r, c]) => r === row && c === col)
-              ) {
-                color = "bg-green-500";
-              }
-
-              return (
-                <div
-                  key={`${row}-${col}`}
-                  className={`w-full h-24 border-4 border-black rounded-base ${color}`}
-                  onClick={() => handleClick(row, col)}
-                ></div>
-              );
-            })
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export function SliderMines({
-  value,
-  setValue,
-  ...props
-}: {
-  value: number[];
-  setValue: (value: number[]) => void;
-}) {
-  return (
-    <div className="w-full flex flex-col items-start gap-2">
-      <div className="flex w-full items-center justify-between">
-        <Label>Difficulty</Label>
-        <Label>{value}</Label>
-      </div>
-
-      <Slider
-        defaultValue={value}
-        max={4}
-        step={1}
-        onValueChange={(e) => setValue(e)}
-        // className={`${value === 0 ? "bg-red-500" : ""}`}
-        {...props}
-      />
-    </div>
   );
 }

@@ -153,12 +153,12 @@ export default function Home() {
               </AccordionItem>
               <AccordionItem className="mb-2" value="item-2">
                 <AccordionTrigger>
-                  Which network and token does it use?
+                  Which network does it use?
                 </AccordionTrigger>
                 <AccordionContent className="text-sm sm:text-base">
-                  It runs on Base Sepolia (Inco Lightning). You bet with a free
-                  test USDC token, grab some from the Deposit page&apos;s
-                  faucet. No real money is involved.
+                  It runs on Base Sepolia (Inco Lightning) and you bet with Base
+                  Sepolia test ETH. Grab some free from a faucet, connect, and
+                  play. No real money is involved.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem className="mb-2" value="item-3">

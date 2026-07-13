@@ -1,12 +1,6 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
@@ -22,6 +16,11 @@
   },
   {
     "inputs": [],
+    "name": "ExceedsAvailable",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "HandleMismatch",
     "type": "error"
   },
@@ -32,7 +31,7 @@
   },
   {
     "inputs": [],
-    "name": "InsufficientFee",
+    "name": "InsufficientValue",
     "type": "error"
   },
   {
@@ -41,24 +40,13 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "maxNumBets",
-        "type": "uint256"
-      }
-    ],
-    "name": "InvalidNumBets",
+    "inputs": [],
+    "name": "InvalidRounds",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "NotExpired",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotInitialised",
     "type": "error"
   },
   {
@@ -84,25 +72,38 @@
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "SafeERC20FailedOperation",
-    "type": "error"
-  },
-  {
     "inputs": [],
     "name": "UnknownGame",
     "type": "error"
   },
   {
     "inputs": [],
+    "name": "WagerTooHigh",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "ZeroWager",
     "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "BankrollFunded",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -155,6 +156,12 @@
         "internalType": "bytes32",
         "name": "seedHandle",
         "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "kind",
+        "type": "uint8"
       }
     ],
     "name": "BetPlaced",
@@ -192,9 +199,113 @@
         "internalType": "uint256",
         "name": "randomSeed",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "kind",
+        "type": "uint8"
       }
     ],
     "name": "BetSettled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "player",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wagerPerRound",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "payout",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8[]",
+        "name": "outcomes",
+        "type": "uint8[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "payouts",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rounds",
+        "type": "uint32"
+      }
+    ],
+    "name": "CoinFlip_Outcome_Event",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "player",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wagerPerRound",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "payout",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8[]",
+        "name": "rolls",
+        "type": "uint8[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "payouts",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rounds",
+        "type": "uint32"
+      }
+    ],
+    "name": "Dice_Outcome_Event",
     "type": "event"
   },
   {
@@ -226,73 +337,18 @@
       },
       {
         "indexed": false,
-        "internalType": "uint8[]",
-        "name": "coinOutcomes",
-        "type": "uint8[]"
+        "internalType": "uint8[2][]",
+        "name": "selectedPoints",
+        "type": "uint8[2][]"
       },
       {
         "indexed": false,
-        "internalType": "uint256[]",
-        "name": "payouts",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint32",
-        "name": "numGames",
-        "type": "uint32"
+        "internalType": "uint8[2][]",
+        "name": "minePositions",
+        "type": "uint8[2][]"
       }
     ],
-    "name": "CoinFlip_Outcome_Event",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "gameId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "player",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "wager",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "isHeads",
-        "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint32",
-        "name": "numBets",
-        "type": "uint32"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "stopGain",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "stopLoss",
-        "type": "uint256"
-      }
-    ],
-    "name": "CoinFlip_Play_Event",
+    "name": "Mines_Outcome_Event",
     "type": "event"
   },
   {
@@ -315,8 +371,200 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "player",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wagerPerRound",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "payout",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8[]",
+        "name": "buckets",
+        "type": "uint8[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "payouts",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rounds",
+        "type": "uint32"
+      }
+    ],
+    "name": "Plinko_Outcome_Event",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "player",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wagerPerRound",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "payout",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8[]",
+        "name": "houseActions",
+        "type": "uint8[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "payouts",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rounds",
+        "type": "uint32"
+      }
+    ],
+    "name": "RPS_Outcome_Event",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "player",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wagerPerRound",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "payout",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8[3][]",
+        "name": "spins",
+        "type": "uint8[3][]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "payouts",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "rounds",
+        "type": "uint32"
+      }
+    ],
+    "name": "Slot_Outcome_Event",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Withdrawn",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "GAME_TIMEOUT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_ROUNDS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_WAGER_PER_ROUND",
     "outputs": [
       {
         "internalType": "uint256",
@@ -342,15 +590,9 @@
   },
   {
     "inputs": [],
-    "name": "betToken",
-    "outputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "depositBankroll",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -422,40 +664,19 @@
             "type": "bool"
           },
           {
+            "internalType": "enum Casino.Kind",
+            "name": "kind",
+            "type": "uint8"
+          },
+          {
             "internalType": "bytes",
             "name": "params",
             "type": "bytes"
           }
         ],
-        "internalType": "struct CasinoBase.PendingGame",
+        "internalType": "struct Casino.PendingGame",
         "name": "",
         "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "initialize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "isInitialised",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -491,7 +712,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "wager",
+        "name": "wagerPerRound",
         "type": "uint256"
       },
       {
@@ -501,21 +722,151 @@
       },
       {
         "internalType": "uint32",
-        "name": "numBets",
+        "name": "rounds",
         "type": "uint32"
-      },
+      }
+    ],
+    "name": "playCoinFlip",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "stopGain",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "stopLoss",
+        "name": "gameId",
         "type": "uint256"
       }
     ],
-    "name": "play",
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "guess",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bool",
+        "name": "isOver",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "wagerPerRound",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint32",
+        "name": "rounds",
+        "type": "uint32"
+      }
+    ],
+    "name": "playDice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8[2][]",
+        "name": "points",
+        "type": "uint8[2][]"
+      },
+      {
+        "internalType": "uint8",
+        "name": "numMines",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "wager",
+        "type": "uint256"
+      }
+    ],
+    "name": "playMines",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "wagerPerRound",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint32",
+        "name": "rounds",
+        "type": "uint32"
+      }
+    ],
+    "name": "playPlinko",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "action",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "wagerPerRound",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint32",
+        "name": "rounds",
+        "type": "uint32"
+      }
+    ],
+    "name": "playRPS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "gameId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "wagerPerRound",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint32",
+        "name": "rounds",
+        "type": "uint32"
+      }
+    ],
+    "name": "playSlots",
     "outputs": [
       {
         "internalType": "uint256",
@@ -603,6 +954,13 @@
       }
     ],
     "name": "withdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawAll",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

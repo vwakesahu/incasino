@@ -2,14 +2,6 @@
   "network": "baseSepolia",
   "chainId": 84532,
   "deployer": "0xa75b46f2d30700d08ee9520c4d3a4e737a2a202f",
-  "MockUSDC": "0x3df930c383f646aa60220d8567a6080a7521588c",
-  "games": {
-    "CoinFlip": "0xb78e66761bc497c02c8deb669a1e8a23389c434a",
-    "Dice": "0x2cf2d5ae7258625ae49f8c658ef1b5d8e8da77a0",
-    "Mines": "0x23282ca7ada3b20df4f98e1090017beb067db3bd",
-    "Plinko": "0x45dbc9182809b48522c8e8e9bb5e28ab00a25ba4",
-    "RockPaperScissors": "0xf16b1e3a22143f4fcb6966cda6cb211614b038e0",
-    "SlotMachine": "0x6b1a4eb2a1734f917c688990dba3cdb6718e7124"
-  },
-  "timestamp": "2026-06-29T17:11:15.353Z"
+  "Casino": "0x5b5d7d4ad82bac6419c205c395fd208901592357",
+  "timestamp": "2026-07-13T06:08:20.568Z"
 }
