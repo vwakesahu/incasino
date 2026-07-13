@@ -7,6 +7,7 @@ import { WagerRounds } from "@/components/WagerRounds";
 import { PlayButton } from "@/components/PlayButton";
 import { GameStatus } from "@/components/GameStatus";
 import { RoundResults } from "@/components/RoundResults";
+import { InfoButton } from "@/components/InfoButton";
 import { Label } from "@/components/ui/label";
 import { useCasinoGame } from "@/hooks/useCasinoGame";
 import { useWinFx } from "@/hooks/useWinFx";
@@ -157,7 +158,17 @@ export default function MinesPage() {
 
         {/* Controls */}
         <div className="flex flex-col gap-5 rounded-base border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_#000]">
-          <h1 className="font-heading text-2xl">Mines</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="font-heading text-2xl">Mines</h1>
+            <InfoButton>
+              <p>Pick 1–10 tiles on the 5×5 grid and set 1–5 hidden mines.</p>
+              <p>
+                If none of your tiles is a mine, you win <b>wager × tiles × mines</b>. Hit a mine and
+                you lose.
+              </p>
+              <p>More tiles and more mines mean a bigger payout but a higher chance of a hit.</p>
+            </InfoButton>
+          </div>
 
           {/* Mines stepper */}
           <div className="flex flex-col gap-1.5">

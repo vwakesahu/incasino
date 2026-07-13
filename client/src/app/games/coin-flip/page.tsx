@@ -8,6 +8,7 @@ import { WagerRounds } from "@/components/WagerRounds";
 import { PlayButton } from "@/components/PlayButton";
 import { GameStatus } from "@/components/GameStatus";
 import { RoundResults } from "@/components/RoundResults";
+import { InfoButton } from "@/components/InfoButton";
 import { useCasinoGame } from "@/hooks/useCasinoGame";
 import { useSequentialReveal } from "@/hooks/useSequentialReveal";
 import { useWinFx } from "@/hooks/useWinFx";
@@ -112,7 +113,16 @@ export default function CoinFlipPage() {
 
         {/* Controls */}
         <div className="flex flex-col gap-5 rounded-base border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_#000]">
-          <h1 className="font-heading text-2xl">Coin Flip</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="font-heading text-2xl">Coin Flip</h1>
+            <InfoButton>
+              <p>
+                Pick <b>Heads</b> or <b>Tails</b>. If the coin lands on your pick, the round pays{" "}
+                <b>1.98x</b> your wager.
+              </p>
+              <p>Any other result loses that round. Play up to 10 rounds at once.</p>
+            </InfoButton>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             {(["heads", "tails"] as const).map((side) => (

@@ -7,6 +7,7 @@ import { WagerRounds } from "@/components/WagerRounds";
 import { PlayButton } from "@/components/PlayButton";
 import { GameStatus } from "@/components/GameStatus";
 import { RoundResults } from "@/components/RoundResults";
+import { InfoButton } from "@/components/InfoButton";
 import { useCasinoGame } from "@/hooks/useCasinoGame";
 import { useSequentialReveal } from "@/hooks/useSequentialReveal";
 import { useWinFx } from "@/hooks/useWinFx";
@@ -133,7 +134,17 @@ export default function PlinkoPage() {
 
         {/* Controls */}
         <div className="flex flex-col gap-5 rounded-base border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_#000]">
-          <h1 className="font-heading text-2xl">Plinko</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="font-heading text-2xl">Plinko</h1>
+            <InfoButton>
+              <p>A ball drops through 8 pegs into one of 17 slots.</p>
+              <p>
+                Edge slots pay up to <b>16x</b>; the closer to the center, the smaller the payout
+                (down to 1/16x).
+              </p>
+              <p>Center slots pay back less than your stake, so only the edges are net wins.</p>
+            </InfoButton>
+          </div>
 
           <WagerRounds
             wager={wager}

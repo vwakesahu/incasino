@@ -8,6 +8,7 @@ import { WagerRounds } from "@/components/WagerRounds";
 import { PlayButton } from "@/components/PlayButton";
 import { GameStatus } from "@/components/GameStatus";
 import { RoundResults } from "@/components/RoundResults";
+import { InfoButton } from "@/components/InfoButton";
 import { useCasinoGame } from "@/hooks/useCasinoGame";
 import { useSequentialReveal } from "@/hooks/useSequentialReveal";
 import { useWinFx } from "@/hooks/useWinFx";
@@ -159,7 +160,18 @@ export default function DicePage() {
 
         {/* Controls */}
         <div className="flex flex-col gap-5 rounded-base border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_#000]">
-          <h1 className="font-heading text-2xl">Dice</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="font-heading text-2xl">Dice</h1>
+            <InfoButton>
+              <p>
+                Pick a number (1–99) and <b>Over</b> or <b>Under</b>. A roll of 0–100 is drawn.
+              </p>
+              <p>
+                <b>Over</b> wins if the roll is above your number; <b>Under</b> wins if it is below.
+              </p>
+              <p>Payout grows as your win chance shrinks (98% RTP). Very safe bets can pay under 1x.</p>
+            </InfoButton>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             {([

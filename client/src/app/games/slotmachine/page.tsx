@@ -8,6 +8,7 @@ import { WagerRounds } from "@/components/WagerRounds";
 import { PlayButton } from "@/components/PlayButton";
 import { GameStatus } from "@/components/GameStatus";
 import { RoundResults } from "@/components/RoundResults";
+import { InfoButton } from "@/components/InfoButton";
 import { useCasinoGame } from "@/hooks/useCasinoGame";
 import { useSequentialReveal } from "@/hooks/useSequentialReveal";
 import { useWinFx } from "@/hooks/useWinFx";
@@ -147,7 +148,19 @@ export default function SlotMachinePage() {
 
         {/* Controls */}
         <div className="flex flex-col gap-5 rounded-base border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_#000]">
-          <h1 className="font-heading text-2xl">Slots</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="font-heading text-2xl">Slots</h1>
+            <InfoButton>
+              <p>Spin three reels. Winning combos:</p>
+              <p>
+                7️⃣7️⃣7️⃣ → <b>5x</b> · any triple → up to <b>5.25x</b> · two 7️⃣ → <b>1.5x</b>
+              </p>
+              <p>
+                A 3-in-a-row run (0.66x) or any pair (0.33x) pays back less than your stake, so only
+                triples and double-7s are net wins.
+              </p>
+            </InfoButton>
+          </div>
 
           <WagerRounds
             wager={wager}
