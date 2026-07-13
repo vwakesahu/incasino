@@ -103,16 +103,23 @@ export default function SlotMachinePage() {
       <div className="grid w-full max-w-4xl items-center gap-8 md:grid-cols-2">
         {/* Visual */}
         <div className="flex flex-col items-center justify-center gap-4">
-          <div className="flex flex-col items-center gap-4 rounded-base border-4 border-black bg-[#3D6EF5] p-5 shadow-[6px_6px_0_0_#000]">
-            <div className="flex gap-3">
-              {reels.map((v, i) => (
-                <div
-                  key={i}
-                  className={`flex h-28 w-24 items-center justify-center rounded-base border-4 border-black text-5xl shadow-[3px_3px_0_0_#000] ${reelBox}`}
-                >
-                  {SYMBOLS[v]}
-                </div>
-              ))}
+          <div className="relative w-[360px] max-w-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/svgs/slot-machine.svg" alt="slot machine" className="w-full" />
+            {/* Reels overlaid on the machine's window (calibrated to the SVG). */}
+            <div className="absolute left-[17%] top-[34%] h-[25.4%] w-[58.2%]">
+              <div className={`grid h-full w-full grid-cols-3 overflow-hidden rounded-lg border-2 border-black transition-colors ${reelBox}`}>
+                {reels.map((v, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center justify-center text-3xl m800:text-2xl ${
+                      i === 1 ? "border-x-2 border-black" : ""
+                    }`}
+                  >
+                    {SYMBOLS[v]}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
