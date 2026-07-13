@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { parseEther } from "viem";
 import { SkipForward } from "lucide-react";
+import Marquee from "@/components/ui/marquee";
 import { WagerRounds } from "@/components/WagerRounds";
 import { PlayButton } from "@/components/PlayButton";
 import { GameStatus } from "@/components/GameStatus";
@@ -17,7 +18,6 @@ const MAX = Number(MAX_WAGER_PER_ROUND_ETH);
 // Reel value (0..7) → symbol.
 const SYMBOLS = ["🍒", "🍋", "🔔", "⭐", "💎", "7️⃣", "🍉", "🍇"] as const;
 
-// Game-specific outcome-event args carried on result.raw.
 interface SlotRaw {
   spins: readonly (readonly bigint[])[]; // each spin is a 3-tuple of reel values 0..7
   payouts: readonly bigint[];
@@ -25,19 +25,28 @@ interface SlotRaw {
 }
 
 type Reels = [number, number, number];
-
 const IDLE: Reels = [5, 5, 5]; // 7️⃣ 7️⃣ 7️⃣
 
-const randomReels = (): Reels => [
-  Math.floor(Math.random() * SYMBOLS.length),
-  Math.floor(Math.random() * SYMBOLS.length),
-  Math.floor(Math.random() * SYMBOLS.length),
-];
+// A vertically-scrolling reel of symbols (used while spinning).
+function Reel({ reverse }: { reverse?: boolean }) {
+  return (
+    <Marquee
+      vertical
+      reverse={reverse}
+      className={`[--duration:0.5s] ${reverse ? "border-x-2 border-black" : ""}`}
+    >
+      {SYMBOLS.map((s, i) => (
+        <div key={i} className="flex items-center justify-center py-0.5 text-3xl m800:text-2xl">
+          {s}
+        </div>
+      ))}
+    </Marquee>
+  );
+}
 
 export default function SlotMachinePage() {
   const [wager, setWager] = useState(MAX_WAGER_PER_ROUND_ETH);
   const [rounds, setRounds] = useState(1);
-  const [spinReels, setSpinReels] = useState<Reels>(IDLE);
   const { stage, error, result, isPlaying, play, retry } = useCasinoGame<SlotRaw>();
   const celebrate = useWinFx();
   const reveal = useSequentialReveal(result, {
@@ -51,14 +60,6 @@ export default function SlotMachinePage() {
   const spinningNow = isPlaying || (revealing && reveal.spinning);
 
   const valid = Number(wager) > 0 && Number(wager) <= MAX && !busy;
-
-  // Cycle the reels while a spin is in flight; clean up when it stops (SSR-safe:
-  // effects only run in the browser, initial render is the deterministic IDLE triple).
-  useEffect(() => {
-    if (typeof window === "undefined" || !spinningNow) return;
-    const id = window.setInterval(() => setSpinReels(randomReels()), 90);
-    return () => window.clearInterval(id);
-  }, [spinningNow]);
 
   const onPlay = () => {
     const perRound = parseEther(wager);
@@ -86,13 +87,10 @@ export default function SlotMachinePage() {
           Number(result!.raw.spins[landedIdx][1]),
           Number(result!.raw.spins[landedIdx][2]),
         ]
-      : spinningNow
-        ? spinReels
-        : IDLE;
+      : IDLE;
 
-  const reelBox = spinningNow
-    ? "animate-pulse bg-yellow-300"
-    : wonThis === true
+  const windowBg =
+    wonThis === true
       ? "bg-green-300 ring-4 ring-green-400"
       : wonThis === false
         ? "bg-red-300 ring-4 ring-red-400"
@@ -101,24 +99,33 @@ export default function SlotMachinePage() {
   return (
     <main className="relative flex flex-col items-center justify-center bg-white px-5 py-[130px] bg-[linear-gradient(to_right,#80808022_1px,transparent_1px),linear-gradient(to_bottom,#80808022_1px,transparent_1px)] bg-[size:70px_70px]">
       <div className="grid w-full max-w-4xl items-center gap-8 md:grid-cols-2">
-        {/* Visual */}
+        {/* Visual: the slot-machine cabinet with reels in its window */}
         <div className="flex flex-col items-center justify-center gap-4">
           <div className="relative w-[360px] max-w-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/svgs/slot-machine.svg" alt="slot machine" className="w-full" />
-            {/* Reels overlaid on the machine's window (calibrated to the SVG). */}
             <div className="absolute left-[17%] top-[34%] h-[25.4%] w-[58.2%]">
-              <div className={`grid h-full w-full grid-cols-3 overflow-hidden rounded-lg border-2 border-black transition-colors ${reelBox}`}>
-                {reels.map((v, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center justify-center text-3xl m800:text-2xl ${
-                      i === 1 ? "border-x-2 border-black" : ""
-                    }`}
-                  >
-                    {SYMBOLS[v]}
-                  </div>
-                ))}
+              <div
+                className={`grid h-full w-full grid-cols-3 overflow-hidden rounded-lg border-2 border-black transition-colors ${windowBg}`}
+              >
+                {spinningNow ? (
+                  <>
+                    <Reel />
+                    <Reel reverse />
+                    <Reel />
+                  </>
+                ) : (
+                  reels.map((v, i) => (
+                    <div
+                      key={i}
+                      className={`flex items-center justify-center text-3xl m800:text-2xl ${
+                        i === 1 ? "border-x-2 border-black" : ""
+                      }`}
+                    >
+                      {SYMBOLS[v]}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
