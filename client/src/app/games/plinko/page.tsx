@@ -80,7 +80,7 @@ export default function PlinkoPage() {
       <div className="grid w-full max-w-4xl items-center gap-8 md:grid-cols-2">
         {/* Visual */}
         <div className="flex flex-col items-center justify-center gap-4">
-          <div className="w-full rounded-base border-4 border-black bg-white p-4 shadow-[6px_6px_0_0_#000]">
+          <div className="mx-auto w-full max-w-[400px] rounded-base border-4 border-black bg-white p-4 shadow-[6px_6px_0_0_#000]">
             {/* Drop zone */}
             <div className="flex h-6 items-start justify-center">
               {spinningNow && (
@@ -107,7 +107,7 @@ export default function PlinkoPage() {
               {MULTIPLIERS.map((m, i) => (
                 <div
                   key={i}
-                  className={`flex min-w-0 flex-1 items-center justify-center rounded-base border-2 border-black px-0.5 py-1.5 text-[8px] font-heading leading-none tracking-tight transition-transform ${bucketStyle(
+                  className={`flex min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[3px] border-2 border-black py-1.5 text-[9px] font-heading leading-none tabular-nums transition-transform ${bucketStyle(
                     i
                   )} ${i === winBucket ? `-translate-y-0.5 ${ring}` : ""}`}
                 >
