@@ -104,7 +104,7 @@ export default function RockPaperScissorsPage() {
                 src={HANDS[houseImg]}
                 alt="house"
                 className={`w-28 m800:w-20 ${landedIdx < 0 && !spinningNow ? "opacity-40" : ""}`}
-                style={{ rotate: "-45deg", scaleX: -1 }}
+                style={{ rotate: "45deg", scaleX: -1 }}
                 animate={bob.animate}
                 transition={bob.transition}
               />
